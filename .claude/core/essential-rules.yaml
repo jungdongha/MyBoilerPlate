@@ -1,0 +1,70 @@
+project:
+  name: MyBoilerPlate
+  type: spring-boot-java
+  domain: boilerplate
+  base_package: com.back.myboilerplate
+
+stack:
+  java: 17
+  spring_boot: 4.0.5
+  db: h2 (in-memory, dev/test)
+  cache: redis
+  security: spring-security + jwt (jjwt 0.12.6)
+  ai: spring-ai (gemini / claude / groq)
+  docs: springdoc-openapi (swagger)
+  encryption: jasypt
+  test: JUnit 5 + Mockito
+
+constraints:
+  - NO field injection (@Autowired) -> Use @RequiredArgsConstructor on ALL @Service, @RestController classes
+  - Entity MUST have @Getter, @NoArgsConstructor(access = PROTECTED), @SuperBuilder, extend BaseEntity -> NO @Setter
+  - State changes ONLY via domain methods (e.g., updateMember(), softDelete())
+  - NO Hard Delete -> Use softDelete() from BaseEntity (sets deleted=true, deletedAt)
+  - NO Logic in Controller -> Delegate ALL logic to Service layer
+  - Service depends ONLY on its own Repository (No Service-to-Service calls)
+  - ApiResponse<T> record MUST be used for all HTTP responses
+  - ErrorCode enum MUST implement ExceptionInformation interface
+  - NO Alpha/Beta versions -> latest Stable only
+  - Performance -> Prefer saveAll() over loop save(). Avoid N+1 queries.
+  - MUST READ references/conventions/coding-style.yaml before implementing new API or exception handling.
+
+package_structure:
+  pattern: "com.back.myboilerplate.domain.{domain}.{layer}"
+  layers:
+    controller: HTTP request/response handling only (implements {Domain}Swagger interface)
+    dto/request: Incoming request DTOs (Java records)
+    dto/response: Outgoing response DTOs (Java records with static factory from())
+    entity: JPA entities extending BaseEntity (@SuperBuilder, NO @Builder)
+    repository: Spring Data JPA repositories
+    service:
+      "{Domain}Service": "CUD (Create/Update/Delete) — @Transactional on class"
+      "{Domain}GetService": "Read only — @Transactional(readOnly=true) on class"
+    exception:
+      "{Domain}ExceptionInformation": "enum implementing ExceptionInformation (에러 코드 정의)"
+      "{Domain}Exception": "extends BaseException (throw 시 사용)"
+  global:
+    common/entity: BaseEntity (createdAt, updatedAt, deleted, deletedAt, softDelete())
+    common/response: ApiResponse<T> record
+    common/exception: BaseException, ErrorCode, ExceptionInformation, GlobalExceptionHandler
+    config: AiConfig, SecurityConfig, RedisConfig, SwaggerConfig, PasswordEncoderConfig
+    security: CustomUserDetails, JwtProvider, JwtFilter, RefreshTokenRepository
+
+domain_creation_order:
+  - "Entity → Repository → ExceptionInformation → Exception → GetService → Service → DTO → SwaggerInterface → Controller"
+
+coding_style:
+  - Prefer final fields (immutability)
+  - Records for DTOs (request/response)
+  - Explicit null handling (Optional, @NonNull, or Objects.requireNonNull)
+  - Response DTO: Use static factory method from(entity) — No direct constructor call
+  - Exception: "throw new {Domain}Exception({Domain}ExceptionInformation.{CODE})"
+  - Error code format: "{PREFIX}-{3digits}" (e.g., MEM-001, AUTH-001)
+  - Controller MUST implement Swagger interface ({Domain}Swagger)
+  - Use @SuperBuilder (NOT @Builder) — required for BaseEntity inheritance
+  - Service is split — GetService (read) + Service (write)
+
+commands:
+  build: ./gradlew build
+  test: ./gradlew test
+  run: ./gradlew bootRun
+  compile: ./gradlew compileJava

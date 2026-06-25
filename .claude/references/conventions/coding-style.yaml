@@ -1,0 +1,109 @@
+# Coding Style Guide — MyBoilerPlate
+# Last Updated: 2026-04-15
+
+meta:
+  title: Coding Style Guide
+  type: Convention
+  scope: Project-wide coding standards
+
+java_style:
+  general:
+    - rule: Prefer final fields
+      description: 불변성 우선 — 가능하면 final 선언
+    - rule: No field injection
+      description: 생성자 주입만 허용 (@RequiredArgsConstructor)
+    - rule: Explicit null handling
+      description: Optional, @NonNull, Objects.requireNonNull 적극 활용
+    - rule: Records for DTOs
+      description: 단순 불변 DTO는 Java record 사용
+    - rule: Static factory methods
+      description: Response DTO는 반드시 from(entity) 정적 팩토리 메서드 사용
+
+  naming:
+    classes: PascalCase (e.g., MemberService)
+    methods: camelCase (e.g., findMemberById)
+    variables: camelCase
+    constants: UPPER_SNAKE_CASE (e.g., MAX_TOKEN_EXPIRE)
+    packages: lowercase (no underscores)
+
+architecture:
+  package_structure:
+    pattern: com.back.myboilerplate.domain.{domain}.{layer}
+    layers:
+      controller: HTTP 요청/응답 처리만 담당 (비즈니스 로직 금지)
+      dto/request: 입력 DTO (record + Jakarta Validation)
+      dto/response: 출력 DTO (record + static factory from())
+      entity: JPA 엔티티 (BaseEntity 상속 필수)
+      repository: Spring Data JPA 인터페이스
+      service: 비즈니스 로직 (단일 도메인, 타 Service 호출 금지)
+      exception: 도메인 예외 enum (ExceptionInformation 구현)
+    global:
+      common/entity: BaseEntity (createdAt, updatedAt, deleted, deletedAt)
+      common/response: ApiResponse<T> record
+      common/exception: BaseException, ErrorCode, GlobalExceptionHandler
+      config: 설정 클래스 (Security, Redis, Swagger, AI 등)
+    examples:
+      - com.back.myboilerplate.domain.member.controller.MemberController
+      - com.back.myboilerplate.domain.member.service.MemberService
+      - com.back.myboilerplate.domain.member.entity.Member
+      - com.back.myboilerplate.domain.member.repository.MemberRepository
+      - com.back.myboilerplate.domain.member.dto.request.MemberCreateRequest
+      - com.back.myboilerplate.domain.member.dto.response.MemberResponse
+      - com.back.myboilerplate.domain.member.exception.MemberException
+
+  dependency_injection:
+    do: "@RequiredArgsConstructor — @Service, @RestController 클래스에 MUST 적용"
+    dont: "@Autowired 필드 주입, 수동 생성자 주입"
+
+spring_boot:
+  transaction:
+    service:
+      read: "@Transactional(readOnly = true) — 조회 메서드"
+      write: "@Transactional — 생성/수정/삭제 메서드"
+
+  controller:
+    annotation: "@RestController + @RequiredArgsConstructor"
+    response: "ApiResponse<T> 반드시 사용"
+    pattern: |
+      return ApiResponse.response(HttpStatus.OK, "메시지", ResponseDto.from(entity));
+
+  response_handling:
+    success: "ApiResponse.response(HttpStatus, message, data)"
+    error: "throw new BaseException(ExceptionInformation)"
+
+  entity:
+    base: "모든 Entity는 BaseEntity 상속 필수 (createdAt, updatedAt, deleted, deletedAt)"
+    id_strategy: "@GeneratedValue(strategy = GenerationType.IDENTITY)"
+    lombok:
+      required: "@Getter — 모든 Entity에 MUST 적용"
+      required2: "@NoArgsConstructor(access = AccessLevel.PROTECTED) — MUST 적용"
+      required3: "@SuperBuilder — BaseEntity 상속 시 MUST 적용"
+      forbidden: "@Setter — 절대 사용 금지 (상태 변경은 도메인 메서드로)"
+    soft_delete:
+      method: "softDelete() — BaseEntity에 정의됨"
+      rule: "물리 삭제 금지. 항상 softDelete() 사용"
+
+error_handling:
+  exception_enum:
+    pattern: |
+      @Getter
+      @AllArgsConstructor
+      public enum MemberException implements ExceptionInformation {
+          MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MBR-001", "회원을 찾을 수 없습니다.");
+
+          private final HttpStatus httpStatus;
+          private final String code;
+          private final String message;
+      }
+  throw_pattern: "throw new BaseException(MemberException.MEMBER_NOT_FOUND);"
+  global_handler: "@RestControllerAdvice — GlobalExceptionHandler 사용"
+
+best_practices:
+  - rule: 불변성 우선
+    description: final 필드, unmodifiable 컬렉션 (List.of, Map.of)
+  - rule: 정적 팩토리 메서드
+    description: Response DTO 변환 시 from(entity) 패턴 — 직접 생성자 호출 금지
+  - rule: Fail Fast
+    description: 입력값을 조기에 검증 (Jakarta Validation, Optional)
+  - rule: 단일 책임
+    description: 메서드는 짧고 하나의 역할만 담당 (30줄 초과 시 분리 고려)

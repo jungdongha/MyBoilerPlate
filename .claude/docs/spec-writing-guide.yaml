@@ -1,0 +1,94 @@
+# Spec Writing Guide — MyBoilerPlate
+# Last Updated: 2026-04-15
+
+meta:
+  title: Spec Writing Guide
+  type: Meta
+  purpose: Claude AI 에이전트가 프로젝트 컨텍스트를 정확히 파악하고 일관된 코드를 생성하도록 하는 스펙 문서 작성 가이드
+
+format:
+  type: YAML
+  reason: Token Optimized
+
+document_structure:
+  template_location: .claude/docs/templates/feature-spec.yaml
+  output_location: ".claude/features/{domain}/{number}_{feature_name}.yaml"
+
+writing_principles:
+  concise:
+    description: 문장보다는 키워드와 구(Phrase) 위주로 작성하여 토큰을 절약한다
+  explicit:
+    description: DTO 이름, 엔티티 이름, API 경로를 정확히 명시한다
+  layered:
+    description: Controller → Service → Repository 데이터 흐름을 준수한다
+  validation_first:
+    description: 구현 전 검증 규칙을 먼저 정의하여 비즈니스 로직의 구멍을 막는다
+
+feature_spec_template:
+  structure:
+    meta:
+      fields:
+        - id: "FEAT-{Number}"
+        - title: "{Feature Name}"
+        - type: "Feature"
+        - author: "{User/Agent}"
+
+    overview:
+      summary: "한 줄 요약"
+      user_story: "As a {Role}, I want to {Action}, so that {Benefit}."
+      goals:
+        - "핵심 목표 1"
+
+    technical_spec:
+      api:
+        method: "{GET | POST | PUT | DELETE}"
+        path: "/api/v1/{resource}"
+        auth: "{Required Role | None}"
+        request:
+          dto: "{RequestDtoName}"
+          fields:
+            - name: "{fieldName}"
+              type: "{Type}"
+              required: true
+              validation: "{Constraints}"
+        response:
+          dto: "{ResponseDtoName}"
+          wrapper: "ApiResponse<{Dto}>"
+
+      data_flow:
+        - step: 1
+          layer: Controller
+          action: "요청 수신 → 검증 → Service 호출"
+        - step: 2
+          layer: Service
+          action: "{비즈니스 로직 요약}"
+          transaction: true
+        - step: 3
+          layer: Repository
+          action: "{DB 저장 / 조회}"
+
+      database:
+        entities:
+          - name: "{EntityName}"
+            action: "{Create | Read | Update | Delete}"
+            fields: "{주요 변경 필드}"
+
+      validation_rules:
+        - "Rule 1"
+        - "Rule 2"
+
+    testing_strategy:
+      happy_path:
+        - "시나리오 1: 정상 케이스"
+      edge_cases:
+        - "시나리오 2: 예외 케이스"
+
+best_practices:
+  - rule: YAML 형식 사용
+    reason: 토큰 효율 + 구조화된 형식
+  - rule: 간결하게 작성
+    reason: 키워드와 구(Phrase) 위주, 완전한 문장 지양
+  - rule: 검증 규칙 먼저 정의
+    reason: 구현 전 비즈니스 로직 구멍 방지
+  - rule: 레이어 아키텍처 준수
+    reason: Controller → Service → Repository 흐름 명시

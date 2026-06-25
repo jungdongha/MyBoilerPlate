@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
-public class JwtProvider {
+public class    JwtProvider {
 
     private final SecretKey secretKey;
     private final long accessExpiration;

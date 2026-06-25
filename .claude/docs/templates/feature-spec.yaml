@@ -1,0 +1,64 @@
+# Feature Specification Template — MyBoilerPlate
+# Status: Draft | In Progress | Done
+# Last Updated: YYYY-MM-DD
+
+meta:
+  id: FEAT-{Number}
+  title: "{Feature Name}"
+  type: Feature
+  author: "{User/Agent}"
+
+overview:
+  summary: >
+    {한 줄 요약: 무엇을 위한 기능인가?}
+  user_story: >
+    As a {Role}, I want to {Action}, so that {Benefit}.
+  goals:
+    - "{핵심 목표 1}"
+    - "{핵심 목표 2}"
+
+technical_spec:
+  api:
+    - method: "{GET | POST | PUT | DELETE}"
+      path: /api/v1/{resource}
+      summary: "{API 설명}"
+      auth: "{Required Role | None}"
+      request:
+        dto: "{RequestDtoName}"
+        fields:
+          - name: "{fieldName}"
+            type: "{Type}"
+            required: true
+            validation: "{Constraints}"
+      response:
+        dto: "{ResponseDtoName}"
+        wrapper: "ApiResponse<{Dto}>"
+
+  data_flow:
+    - step: 1
+      layer: Controller
+      action: "요청 수신 → @Valid 검증 → Service 호출"
+    - step: 2
+      layer: Service
+      action: "{비즈니스 로직 요약}"
+      transaction: true
+    - step: 3
+      layer: Repository
+      action: "{DB 저장 / 조회}"
+
+  database:
+    entities:
+      - name: "{EntityName}"
+        action: "{Create | Read | Update | Delete}"
+        fields: "{주요 변경 필드}"
+
+  validation_rules:
+    - "{Rule 1: e.g., 이메일은 중복될 수 없다}"
+    - "{Rule 2: e.g., 삭제된 회원은 로그인 불가}"
+
+testing_strategy:
+  happy_path:
+    - "{시나리오 1: 정상 케이스}"
+  edge_cases:
+    - "{시나리오 2: 예외 케이스}"
+    - "{시나리오 3: 경계값 테스트}"

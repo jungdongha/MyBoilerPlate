@@ -1,0 +1,72 @@
+# Domain Entity: Member
+# Last Updated: 2026-04-15
+
+entity:
+  name: Member
+  table: members
+  extends: BaseEntity
+  package: com.back.myboilerplate.domain.member.entity
+
+fields:
+  - name: id
+    type: Long
+    constraints: PK, auto-increment (@GeneratedValue IDENTITY)
+  - name: nickName
+    type: String
+    constraints: "nullable: false"
+  - name: email
+    type: String
+    constraints: "nullable: false, unique: true"
+  - name: password
+    type: String
+    constraints: "nullable: false (BCrypt encoded)"
+  - name: role
+    type: Role (enum)
+    constraints: "nullable: false, EnumType.STRING"
+
+base_entity_fields:
+  - createdAt: LocalDateTime (자동 설정, @CreatedDate)
+  - updatedAt: LocalDateTime (자동 설정, @LastModifiedDate)
+  - deleted: boolean (default: false)
+  - deletedAt: LocalDateTime (null이면 활성 상태)
+
+enums:
+  Role:
+    values: [USER, ADMIN]
+    package: com.back.myboilerplate.domain.member.entity.Role
+
+lombok:
+  applied:
+    - "@Getter"
+    - "@NoArgsConstructor(access = AccessLevel.PROTECTED)"
+    - "@SuperBuilder"
+  forbidden:
+    - "@Setter (절대 금지)"
+    - "@AllArgsConstructor (SuperBuilder가 대체)"
+
+domain_methods:
+  - name: updateMember(String nickName)
+    description: 닉네임 변경 — 도메인 메서드로 상태 변경
+    usage: member.updateMember("새닉네임");
+
+soft_delete:
+  method: softDelete()
+  inherited_from: BaseEntity
+  usage: member.softDelete();
+  effect: "deleted = true, deletedAt = 현재시각"
+
+relationships: []
+
+related_files:
+  controller: domain/member/controller/MemberController.java
+  service:
+    - domain/member/service/MemberService.java
+    - domain/member/service/MemberGetService.java
+  repository: domain/member/repository/MemberRepository.java
+  dto:
+    request:
+      - domain/member/dto/request/MemberCreateRequest.java
+      - domain/member/dto/request/MemberUpdateRequest.java
+    response:
+      - domain/member/dto/response/MemberResponse.java
+  exception: domain/member/exception/MemberException.java (구현 시 추가)
